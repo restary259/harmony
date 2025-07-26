@@ -1,7 +1,22 @@
-# Harmony Mod - Common Configuration
+# Harmony Main Configuration
 
-# Enforce strict boundaries for worldgen mods to prevent overlap
-strictWorldgen = true
+[general]
+# If true, Harmony will log every claim and permission check for debugging.
+logAllClaims = false
 
-# Harmony logging level (INFO, DEBUG, WARN, ERROR)
-logLevel = "INFO"
+# If true, Harmony will allow mods to "force-claim" a biome or structure, overriding previous claims (not recommended for public mods).
+allowForceClaim = false
+
+# List of modids that are always prioritized for claims (comma-separated).
+priorityMods = "harmonymod"
+
+[worldgen]
+# If true, Harmony will block worldgen changes in vanilla biomes unless claimed.
+blockVanillaBiomeChanges = true
+
+# If true, Harmony will block structure changes in vanilla structures unless claimed.
+blockVanillaStructureChanges = true
+
+# List of vanilla biomes/structures that are always open for modification (comma-separated ResourceLocations).
+openVanillaBiomes = "minecraft:plains,minecraft:forest"
+openVanillaStructures = "minecraft:village"
