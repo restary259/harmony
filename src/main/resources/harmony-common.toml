@@ -1,0 +1,7 @@
+# Harmony Mod - Common Configuration
+
+# Enforce strict boundaries for worldgen mods to prevent overlap
+strictWorldgen = true
+
+# Harmony logging level (INFO, DEBUG, WARN, ERROR)
+logLevel = "INFO"
