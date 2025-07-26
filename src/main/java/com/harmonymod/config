@@ -1,0 +1,38 @@
+package com.harmonymod.config;
+
+import com.harmonymod.HarmonyMod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.config.ModConfig.Type;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.config.ConfigTracker;
+import net.neoforged.fml.config.ConfigValue;
+import net.neoforged.fml.config.ConfigSpec;
+
+import java.nio.file.Path;
+
+/**
+ * Handles Harmony's configuration loading and management.
+ */
+public class HarmonyConfig {
+    public static final ConfigSpec.Builder BUILDER = ConfigSpec.builder();
+
+    // Example: Should Harmony strictly enforce worldgen boundaries?
+    public static final ConfigValue<Boolean> STRICT_WORLDGEN = BUILDER
+            .comment("Enforce strict boundaries for worldgen mods to prevent overlap (recommended true)")
+            .define("strictWorldgen", true);
+
+    // Example: Logging level for Harmony
+    public static final ConfigValue<String> LOG_LEVEL = BUILDER
+            .comment("Harmony logging level (INFO, DEBUG, WARN, ERROR)")
+            .define("logLevel", "INFO");
+
+    // Add more config options as needed...
+
+    public static final ConfigSpec SPEC = BUILDER.build();
+
+    public static void register() {
+        ModLoadingContext.get().registerConfig(Type.COMMON, SPEC, "harmony-common.toml");
+        HarmonyMod.LOGGER.info("Harmony config registered.");
+    }
+}
