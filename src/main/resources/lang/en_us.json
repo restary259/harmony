@@ -1,0 +1,11 @@
+{
+  "mod.harmonymod.name": "Harmony",
+  "mod.harmonymod.description": "Universal worldgen and structure claim mediator.",
+  "harmonymod.config.logAllClaims": "Log all biome/structure claims and permission checks",
+  "harmonymod.config.allowForceClaim": "Allow mods to force-claim biomes/structures",
+  "harmonymod.config.priorityMods": "Priority mod IDs (comma-separated, higher priority claims)",
+  "harmonymod.config.blockVanillaBiomeChanges": "Block vanilla biome changes unless claimed",
+  "harmonymod.config.blockVanillaStructureChanges": "Block vanilla structure changes unless claimed",
+  "harmonymod.config.openVanillaBiomes": "Always open vanilla biomes (comma-separated ResourceLocations)",
+  "harmonymod.config.openVanillaStructures": "Always open vanilla structures (comma-separated ResourceLocations)"
+}
