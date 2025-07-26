@@ -6,15 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Utility methods for handling biome and structure resource locations.
+ * Utility methods for working with biomes and structures in Harmony API.
  */
 public class BiomeStructureUtils {
 
     /**
-     * Quickly build a set of ResourceLocations from a list of string identifiers.
-     *
-     * @param ids Namespace:path formatted strings.
-     * @return Set of ResourceLocations.
+     * Convenience method to create a set of ResourceLocations from string IDs.
+     * Example: resourceSet("minecraft:plains", "mymod:cool_biome")
      */
     public static Set<ResourceLocation> resourceSet(String... ids) {
         Set<ResourceLocation> set = new HashSet<>();
