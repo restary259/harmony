@@ -1,12 +1,14 @@
 modLoader="javafml"
 loaderVersion="[2,)"
 license="MIT"
-
 [[mods]]
-modId="harmony"
+modId="harmonymod"
 version="1.0.0"
 displayName="Harmony"
-authors="YourName"
+displayURL="https://github.com/yourname/harmonymod"
+logoFile="harmony.png"
+authors="Your Name"
 description='''
-Harmony: Mod mediator for Minecraft worldgen!
+A universal worldgen and structure claim mediator for Minecraft modding.
+Simplifies biome/structure feature claims, ensures compatibility, and adds handy APIs for modders.
 '''
