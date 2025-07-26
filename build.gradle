@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.gradle.userdev' version '7.0.102' // Use the latest NeoForge gradle plugin if available
+}
+
+group = 'com.harmonymod'
+version = '1.0.0'
+archivesBaseName = 'harmonymod'
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+    // Set the version to match your mod's target Minecraft/NeoForge version
+    version = "1.20.4-47.1.84" // Update if a newer NeoForge/Minecraft version is needed
+    runs {
+        client {
+            workingDirectory project.file('run/client')
+        }
+        server {
+            workingDirectory project.file('run/server')
+        }
+        data {
+            workingDirectory project.file('run/data')
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.neoforged.net/releases/" }
+}
+
+dependencies {
+    implementation 'net.neoforged:neoforge:1.20.4-47.1.84'
+    // For config support:
+    implementation 'com.electronwill.night-config:toml:3.6.7'
+}
+
+jar {
+    manifest {
+        attributes([
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Raneem G Dawahade',
+            'Specification-Title': 'HarmonyMod',
+            'Specification-Version': project.version,
+            'Specification-Vendor': 'Raneem G Dawahade',
+            'FMLModType': 'GAMELIBRARY'
+        ])
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
