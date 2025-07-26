@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Main mod entrypoint for Harmony.
- * Responsible for initialization, config loading, and API setup.
  */
 @Mod(HarmonyMod.MODID)
 public class HarmonyMod {
@@ -19,20 +18,12 @@ public class HarmonyMod {
 
     public HarmonyMod() {
         LOGGER.info("Initializing HarmonyMod...");
-
-        // Load configuration
         HarmonyConfig.register();
-
-        // Setup worldgen management and API
         worldGenManager = new WorldGenManager();
         HarmonyAPI.initialize(worldGenManager);
-
         LOGGER.info("HarmonyMod initialized successfully.");
     }
 
-    /**
-     * For internal use and testing.
-     */
     public static WorldGenManager getWorldGenManager() {
         return worldGenManager;
     }
