@@ -1,21 +1,53 @@
 package com.harmonymod;
 
-import com.harmonymod.config.HarmonyConfig;
-import com.mojang.logging.LogUtils;
-import net.neoforged.fml.common.Mod;
-import org.slf4j.Logger;
+import com.harmonymod.worldgen.WorldGenManager;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Set;
 
 /**
- * Harmony mod main class. Coordinates and mediates between other mods for worldgen and performance.
+ * Public API for other mods to interact with Harmony.
+ * Mods can register for worldgen permissions and query their assignments.
  */
-@Mod(HarmonyMod.MODID)
-public class HarmonyMod {
-    public static final String MODID = "harmony";
-    public static final Logger LOGGER = LogUtils.getLogger();
+public class HarmonyAPI {
+    private static WorldGenManager worldGenManager;
 
-    public HarmonyMod() {
-        LOGGER.info("Harmony mod initialized! Ready to coordinate mods for stability and performance.");
-        HarmonyConfig.register();
-        // Future setup: event bus registration, API initialization, etc.
+    // Called by HarmonyMod to provide the internal WorldGenManager instance
+    public static void initialize(WorldGenManager manager) {
+        worldGenManager = manager;
+    }
+
+    /**
+     * Register the biomes this mod would like to control for world generation.
+     */
+    public static void registerWorldGenBiomes(String modid, Set<ResourceLocation> biomes) {
+        if (worldGenManager != null) {
+            worldGenManager.assignBiomesToMod(modid, biomes);
+            HarmonyMod.LOGGER.info("Registered biomes for mod '{}': {}", modid, biomes);
+        }
+    }
+
+    /**
+     * Register the structures this mod would like to control for world generation.
+     */
+    public static void registerWorldGenStructures(String modid, Set<ResourceLocation> structures) {
+        if (worldGenManager != null) {
+            worldGenManager.assignStructuresToMod(modid, structures);
+            HarmonyMod.LOGGER.info("Registered structures for mod '{}': {}", modid, structures);
+        }
+    }
+
+    /**
+     * Query if a mod is allowed to modify a biome.
+     */
+    public static boolean canModModifyBiome(String modid, ResourceLocation biome) {
+        return worldGenManager != null && worldGenManager.canModModifyBiome(modid, biome);
+    }
+
+    /**
+     * Query if a mod is allowed to modify a structure.
+     */
+    public static boolean canModModifyStructure(String modid, ResourceLocation structure) {
+        return worldGenManager != null && worldGenManager.canModModifyStructure(modid, structure);
     }
 }
