@@ -4,14 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class for advanced logging in Harmony.
- * Supports custom log levels and easy message formatting.
+ * Wrapper for SLF4J Logger providing structured logging for Harmony.
  */
 public class HarmonyLogger {
     private final Logger logger;
 
-    public HarmonyLogger(String name) {
-        this.logger = LoggerFactory.getLogger(name);
+    public HarmonyLogger(String modid) {
+        this.logger = LoggerFactory.getLogger(modid);
     }
 
     public void info(String message, Object... args) {
@@ -28,9 +27,5 @@ public class HarmonyLogger {
 
     public void error(String message, Object... args) {
         logger.error(message, args);
-    }
-
-    public void trace(String message, Object... args) {
-        logger.trace(message, args);
     }
 }
