@@ -1,80 +1,93 @@
 package com.harmonymod.worldgen;
 
+import com.harmonymod.HarmonyMod;
+import com.harmonymod.config.HarmonyConfig;
+import com.harmonymod.api.HarmonyEvents;
+import com.harmonymod.util.BiomeStructureUtils;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Manages worldgen ownership assignments and permission checks for Harmony.
- * Ensures that only one mod can control a given biome or structure at a time.
- */
 public class WorldGenManager {
-    // Maps from modid to claimed biomes/structures
     private final Map<String, Set<ResourceLocation>> modBiomeClaims = new HashMap<>();
     private final Map<String, Set<ResourceLocation>> modStructureClaims = new HashMap<>();
-    // Reverse maps for quick lookup: biome/structure -> modid
     private final Map<ResourceLocation, String> biomeOwners = new HashMap<>();
     private final Map<ResourceLocation, String> structureOwners = new HashMap<>();
 
-    /**
-     * Register a set of biomes for a given mod.
-     * Only the first mod to claim a specific biome is allowed to modify it.
-     */
-    public synchronized void registerModBiomes(String modid, Set<ResourceLocation> biomes) {
-        modBiomeClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(biomes);
+    public synchronized boolean registerModBiomes(String modid, Set<ResourceLocation> biomes) {
         for (ResourceLocation biome : biomes) {
-            biomeOwners.putIfAbsent(biome, modid);
+            String currentOwner = biomeOwners.get(biome);
+            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, biome.toString(), true)) {
+                HarmonyMod.LOGGER.warn("Mod {} tried to claim biome {} but it's already owned by {}", modid, biome, currentOwner);
+                continue;
+            }
+            biomeOwners.put(biome, modid);
+            HarmonyEvents.fireBiomeClaim(modid, biome);
+            if (HarmonyConfig.logAllClaims) HarmonyMod.LOGGER.info("Mod {} claimed biome {}", modid, biome);
         }
+        modBiomeClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(biomes);
+        return true;
     }
 
-    /**
-     * Register a set of structures for a given mod.
-     * Only the first mod to claim a specific structure is allowed to modify it.
-     */
-    public synchronized void registerModStructures(String modid, Set<ResourceLocation> structures) {
-        modStructureClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(structures);
+    public synchronized boolean registerModStructures(String modid, Set<ResourceLocation> structures) {
         for (ResourceLocation structure : structures) {
-            structureOwners.putIfAbsent(structure, modid);
+            String currentOwner = structureOwners.get(structure);
+            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, structure.toString(), false)) {
+                HarmonyMod.LOGGER.warn("Mod {} tried to claim structure {} but it's already owned by {}", modid, structure, currentOwner);
+                continue;
+            }
+            structureOwners.put(structure, modid);
+            HarmonyEvents.fireStructureClaim(modid, structure);
+            if (HarmonyConfig.logAllClaims) HarmonyMod.LOGGER.info("Mod {} claimed structure {}", modid, structure);
         }
+        modStructureClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(structures);
+        return true;
     }
 
-    /**
-     * Check if the given mod can modify the specified biome.
-     */
     public boolean canModModifyBiome(String modid, ResourceLocation biome) {
-        return modid.equals(biomeOwners.get(biome));
+        HarmonyEvents.fireBiomePermissionCheck(modid, biome);
+        String owner = biomeOwners.get(biome);
+        if (owner == null) {
+            if (HarmonyConfig.blockVanillaBiomeChanges && BiomeStructureUtils.isVanilla(biome.toString())
+                    && !HarmonyConfig.openVanillaBiomes.contains(biome.toString())) {
+                return false;
+            }
+            return true;
+        }
+        return modid.equals(owner);
     }
 
-    /**
-     * Check if the given mod can modify the specified structure.
-     */
     public boolean canModModifyStructure(String modid, ResourceLocation structure) {
-        return modid.equals(structureOwners.get(structure));
+        HarmonyEvents.fireStructurePermissionCheck(modid, structure);
+        String owner = structureOwners.get(structure);
+        if (owner == null) {
+            if (HarmonyConfig.blockVanillaStructureChanges && BiomeStructureUtils.isVanilla(structure.toString())
+                    && !HarmonyConfig.openVanillaStructures.contains(structure.toString())) {
+                return false;
+            }
+            return true;
+        }
+        return modid.equals(owner);
     }
 
-    /**
-     * Get the set of biomes registered by a mod.
-     */
     public Set<ResourceLocation> getRegisteredBiomes(String modid) {
         return modBiomeClaims.getOrDefault(modid, Collections.emptySet());
     }
 
-    /**
-     * Get the set of structures registered by a mod.
-     */
     public Set<ResourceLocation> getRegisteredStructures(String modid) {
         return modStructureClaims.getOrDefault(modid, Collections.emptySet());
     }
 
-    @Override
-    public String toString() {
-        return "WorldGenManager{" +
-                "biomeOwners=" + biomeOwners +
-                ", structureOwners=" + structureOwners +
-                '}';
+    private boolean canOverrideClaim(String newMod, String oldMod, String id, boolean isBiome) {
+        // Priority mods logic
+        if (HarmonyConfig.priorityMods.contains(newMod) && !HarmonyConfig.priorityMods.contains(oldMod)) {
+            return true;
+        }
+        // Config option
+        if (HarmonyConfig.allowForceClaim) {
+            HarmonyMod.LOGGER.warn("Force-claim allowed: {} replaces {} for {}", newMod, oldMod, id);
+            return true;
+        }
+        return false;
     }
 }
