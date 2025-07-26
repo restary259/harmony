@@ -6,19 +6,21 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Set;
 
 /**
- * Public API for other mods to interact with Harmony.
- * Mods can register for worldgen permissions and query their assignments.
+ * Public API for other mods to interact with Harmony's worldgen assignment system.
  */
 public class HarmonyAPI {
     private static WorldGenManager worldGenManager;
 
-    // Called by HarmonyMod to provide the internal WorldGenManager instance
+    /**
+     * Called by HarmonyMod to provide the manager instance.
+     * @param manager WorldGenManager instance
+     */
     public static void initialize(WorldGenManager manager) {
         worldGenManager = manager;
     }
 
     /**
-     * Register the biomes this mod would like to control for world generation.
+     * Register biomes this mod will control for worldgen.
      */
     public static void registerWorldGenBiomes(String modid, Set<ResourceLocation> biomes) {
         if (worldGenManager != null) {
@@ -28,7 +30,7 @@ public class HarmonyAPI {
     }
 
     /**
-     * Register the structures this mod would like to control for world generation.
+     * Register structures this mod will control for worldgen.
      */
     public static void registerWorldGenStructures(String modid, Set<ResourceLocation> structures) {
         if (worldGenManager != null) {
