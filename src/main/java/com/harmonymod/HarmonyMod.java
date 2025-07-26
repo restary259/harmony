@@ -1,5 +1,6 @@
 package com.harmonymod;
 
+import com.harmonymod.config.HarmonyConfig;
 import com.mojang.logging.LogUtils;
 import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ public class HarmonyMod {
 
     public HarmonyMod() {
         LOGGER.info("Harmony mod initialized! Ready to coordinate mods for stability and performance.");
-        // Initialization code and event bus registration will go here in future steps.
+        HarmonyConfig.register();
+        // Future setup: event bus registration, API initialization, etc.
     }
 }
