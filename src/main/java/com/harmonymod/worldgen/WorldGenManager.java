@@ -1,56 +1,80 @@
 package com.harmonymod.worldgen;
 
-import com.harmonymod.HarmonyMod;
-import net.neoforged.neoforge.event.level.levelgen.BiomeLoadingEvent;
-import net.neoforged.neoforge.event.level.levelgen.StructureSpawnListGatherEvent;
-import net.neoforged.neoforge.event.EventPriority;
-import net.neoforged.neoforge.eventbus.api.SubscribeEvent;
-import net.neoforged.neoforge.eventbus.api.IEventBus;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Manages all worldgen biome/structure assignments and enforces boundaries.
+ * Manages worldgen ownership assignments and permission checks for Harmony.
+ * Ensures that only one mod can control a given biome or structure at a time.
  */
 public class WorldGenManager {
-    private final Map<String, Set<ResourceLocation>> modBiomeAssignments = new HashMap<>();
-    private final Map<String, Set<ResourceLocation>> modStructureAssignments = new HashMap<>();
+    // Maps from modid to claimed biomes/structures
+    private final Map<String, Set<ResourceLocation>> modBiomeClaims = new HashMap<>();
+    private final Map<String, Set<ResourceLocation>> modStructureClaims = new HashMap<>();
+    // Reverse maps for quick lookup: biome/structure -> modid
+    private final Map<ResourceLocation, String> biomeOwners = new HashMap<>();
+    private final Map<ResourceLocation, String> structureOwners = new HashMap<>();
 
-    public WorldGenManager(IEventBus modEventBus) {
-        modEventBus.addListener(EventPriority.HIGHEST, this::onBiomeLoad);
-        modEventBus.addListener(EventPriority.HIGHEST, this::onStructureSpawnListGather);
-        HarmonyMod.LOGGER.info("WorldGenManager initialized and event listeners registered.");
+    /**
+     * Register a set of biomes for a given mod.
+     * Only the first mod to claim a specific biome is allowed to modify it.
+     */
+    public synchronized void registerModBiomes(String modid, Set<ResourceLocation> biomes) {
+        modBiomeClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(biomes);
+        for (ResourceLocation biome : biomes) {
+            biomeOwners.putIfAbsent(biome, modid);
+        }
     }
 
-    public void assignBiomesToMod(String modid, Set<ResourceLocation> biomes) {
-        modBiomeAssignments.computeIfAbsent(modid, k -> new HashSet<>()).addAll(biomes);
+    /**
+     * Register a set of structures for a given mod.
+     * Only the first mod to claim a specific structure is allowed to modify it.
+     */
+    public synchronized void registerModStructures(String modid, Set<ResourceLocation> structures) {
+        modStructureClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(structures);
+        for (ResourceLocation structure : structures) {
+            structureOwners.putIfAbsent(structure, modid);
+        }
     }
 
-    public void assignStructuresToMod(String modid, Set<ResourceLocation> structures) {
-        modStructureAssignments.computeIfAbsent(modid, k -> new HashSet<>()).addAll(structures);
-    }
-
+    /**
+     * Check if the given mod can modify the specified biome.
+     */
     public boolean canModModifyBiome(String modid, ResourceLocation biome) {
-        return modBiomeAssignments.getOrDefault(modid, Set.of()).contains(biome);
+        return modid.equals(biomeOwners.get(biome));
     }
 
+    /**
+     * Check if the given mod can modify the specified structure.
+     */
     public boolean canModModifyStructure(String modid, ResourceLocation structure) {
-        return modStructureAssignments.getOrDefault(modid, Set.of()).contains(structure);
+        return modid.equals(structureOwners.get(structure));
     }
 
-    @SubscribeEvent
-    public void onBiomeLoad(BiomeLoadingEvent event) {
-        HarmonyMod.LOGGER.debug("BiomeLoad: {}", event.getName());
-        // Conflict resolution logic can be added here
+    /**
+     * Get the set of biomes registered by a mod.
+     */
+    public Set<ResourceLocation> getRegisteredBiomes(String modid) {
+        return modBiomeClaims.getOrDefault(modid, Collections.emptySet());
     }
 
-    @SubscribeEvent
-    public void onStructureSpawnListGather(StructureSpawnListGatherEvent event) {
-        HarmonyMod.LOGGER.debug("StructureSpawnListGather: {}", event.getStructure());
-        // Structure allocation/resolution logic can be added here
+    /**
+     * Get the set of structures registered by a mod.
+     */
+    public Set<ResourceLocation> getRegisteredStructures(String modid) {
+        return modStructureClaims.getOrDefault(modid, Collections.emptySet());
+    }
+
+    @Override
+    public String toString() {
+        return "WorldGenManager{" +
+                "biomeOwners=" + biomeOwners +
+                ", structureOwners=" + structureOwners +
+                '}';
     }
 }
