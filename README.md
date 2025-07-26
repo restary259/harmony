@@ -1,54 +1,133 @@
-# Harmony
+# Harmony Mod
 
-**Harmony** is a Minecraft mod for NeoForge 1.21.1 designed to act as a central coordinator and mediator between other mods—especially those that modify world generation (biomes, structures, etc.). Harmony ensures stability, compatibility, and performance by managing how different mods interact with the Minecraft world, preventing conflicts and crashes.
-
-## Features
-
-- **Central Mod Coordination:** Acts as a "boss" mod, managing how other mods interact with world generation.
-- **Conflict Resolution:** Prevents overlapping biomes, structures, and chunk modifications.
-- **Dynamic Assignment:** Assigns worldgen responsibilities (biome/chunk/structure) to mods based on rules or configuration.
-- **Open API:** Other mods can register and communicate with Harmony for safe, coordinated interaction.
-- **Performance Guard:** Detects and prevents laggy or recursive operations from mods that could destabilize the game.
-- **User Configuration:** Powerful config file lets users fine-tune which mods control what aspects of world generation.
-
-## Example Use Case
-
-If you have multiple world generation mods (e.g., four different biome or structure mods), Harmony will:
-- Assign each mod specific biomes or chunks to modify, so they don’t overwrite or conflict with each other.
-- Ensure structures from different mods do not overlap.
-- Prevent crashes and performance drops from worldgen conflicts.
-
-## Getting Started
-
-### Requirements
-
-- Minecraft **1.21.1** (Java Edition)
-- [NeoForge](https://neoforged.net/) mod loader
-- Java 17 or newer
-
-### Installation
-
-1. Download the latest Harmony mod jar from the [Releases](https://github.com/YOUR_USERNAME/Harmony/releases) page.
-2. Place the jar in your Minecraft `mods` folder.
-3. Configure Harmony using the provided config file for your desired worldgen rules.
-
-### For Mod Developers
-
-Harmony provides an API that allows your mod to:
-- Register worldgen features with Harmony.
-- Request or release control over specific biomes/chunks/structures.
-- Listen for events about worldgen permissions and assignments.
-
-**See the [API Documentation](docs/API.md) for details and examples.**
-
-## Contributing
-
-Contributions, suggestions, and feature requests are welcome! Please open an issue or pull request.
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+**Harmony** is an open-source universal worldgen and structure claim mediator for Minecraft modding.  
+It ensures compatibility between mods that modify biomes or structures, provides a clear and easy API for modders, and offers flexible configuration for pack creators and users.
 
 ---
 
-*Harmony: Making mods play nice together!*
+## Features
+
+- **Worldgen Claim System:**  
+  Mods can claim ownership of specific biomes or structures for world generation, preventing conflicts.
+- **Permission Checks:**  
+  Mods can easily check if they are allowed to modify a biome or structure.
+- **Configurable Ownership:**  
+  Config options allow force-claiming, prioritizing certain mods, or opening up vanilla biomes/structures for modification.
+- **Event Hooks:**  
+  Listen for claim and permission events for analytics, logging, or custom logic.
+- **API-First Design:**  
+  Simple, safe API for registering claims and performing checks.
+- **Debug and Compatibility Tools:**  
+  Optional logging of all claims and permission requests for troubleshooting.
+- **Open Contribution:**  
+  Anyone is encouraged to contribute, improve, and expand Harmony! See [Contributing](#contributing).
+
+---
+
+## Installation
+
+1. Download the mod JAR from [Releases](https://github.com/yourname/harmonymod/releases).
+2. Place the JAR in your `mods` folder.
+3. (Optional) Edit `harmony.toml` in your `config` folder to tweak settings.
+
+This mod requires [NeoForge](https://neoforged.net/) and Minecraft 1.20+.
+
+---
+
+## Getting Started for Modders
+
+### Claim a Biome or Structure
+
+```java
+// Example: Claim biomes and structures for your mod
+HarmonyAPI.registerWorldGenBiomes("yourmodid", BiomeStructureUtils.resourceSet(
+    "minecraft:plains",
+    "yourmodid:special_biome"
+));
+HarmonyAPI.registerWorldGenStructures("yourmodid", BiomeStructureUtils.resourceSet(
+    "minecraft:village",
+    "yourmodid:custom_structure"
+));
+```
+
+### Permission Check
+
+```java
+if (HarmonyAPI.canModModifyBiome("yourmodid", new ResourceLocation("minecraft:plains"))) {
+    // Safe to modify this biome!
+}
+```
+
+### Listen for Harmony Events
+
+```java
+HarmonyEvents.onBiomeClaim((modid, biome) -> {
+    System.out.println(modid + " claimed biome: " + biome);
+});
+```
+
+---
+
+## Configuration
+
+Edit `harmony.toml` in the `config` folder to control:
+
+- **Logging:**  
+  Enable `logAllClaims` to debug all claims and permission checks.
+- **Force-Claiming:**  
+  Allow mods to override claims (for expert use or dev packs).
+- **Priority Mods:**  
+  List mod IDs with higher claim priority.
+- **Vanilla Worldgen Blocking:**  
+  Prevent unclaimed changes to vanilla biomes/structures.
+- **Open List:**  
+  Whitelist certain vanilla biomes/structures to always be modifiable.
+
+Sample:
+```toml
+[general]
+logAllClaims = false
+allowForceClaim = false
+priorityMods = "harmonymod"
+
+[worldgen]
+blockVanillaBiomeChanges = true
+blockVanillaStructureChanges = true
+openVanillaBiomes = "minecraft:plains,minecraft:forest"
+openVanillaStructures = "minecraft:village"
+```
+
+---
+
+## For Pack Makers
+
+- Use the config to fine-tune which mods or worldgen areas get priority.
+- Use logging to debug worldgen conflicts in complex packs.
+
+---
+
+## Contributing
+
+**Harmony is open-source and welcomes contributions!**
+
+- Fork this repository and submit pull requests for features, bugfixes, or improvements.
+- Open issues for suggestions or problems.
+- Discuss ideas and collaborate—let’s make worldgen compatibility easy for everyone!
+
+**By contributing, you agree to license your code under the MIT License.**
+
+---
+
+## License
+
+MIT License.  
+See [LICENSE](LICENSE) for details.
+
+---
+
+## Credits
+
+- Designed and developed by Raneem G Dawahade.
+- Thanks to the Minecraft modding community for inspiration and feedback.
+
+---
