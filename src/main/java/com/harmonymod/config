@@ -1,55 +1,46 @@
 package com.harmonymod.config;
 
-import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.config.ConfigTracker;
-import net.neoforged.fml.loading.FMLPaths;
+
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Handles loading and registration of Harmony's configuration settings.
+ * Loads and provides access to Harmony configuration options.
  */
 public class HarmonyConfig {
-    private static CommentedConfig config;
+    public static boolean logAllClaims = false;
+    public static boolean allowForceClaim = false;
+    public static Set<String> priorityMods = new HashSet<>(Collections.singletonList("harmonymod"));
 
-    /**
-     * Register the configuration file with the mod loading context.
-     */
+    public static boolean blockVanillaBiomeChanges = true;
+    public static boolean blockVanillaStructureChanges = true;
+    public static Set<String> openVanillaBiomes = new HashSet<>();
+    public static Set<String> openVanillaStructures = new HashSet<>();
+
     public static void register() {
-        String configPath = FMLPaths.CONFIGDIR.get().resolve("harmony.toml").toString();
-        config = CommentedFileConfig.builder(configPath)
-                .autosave()
-                .autoreload()
-                .build();
-        config.load();
+        Path configPath = ModLoadingContext.get().getActiveContainer().getModInfo().getOwningFile().getFile().getFilePath().resolveSibling("harmony.toml");
+        try (CommentedFileConfig configData = CommentedFileConfig.builder(configPath).autosave().autoreload().build()) {
+            configData.load();
 
-        ConfigTracker.INSTANCE.track(ModConfig.Type.COMMON, config, "harmony.toml");
+            logAllClaims = configData.getOrElse("general.logAllClaims", false);
+            allowForceClaim = configData.getOrElse("general.allowForceClaim", false);
+            priorityMods = stringSet(configData.getOrElse("general.priorityMods", "harmonymod"));
+
+            blockVanillaBiomeChanges = configData.getOrElse("worldgen.blockVanillaBiomeChanges", true);
+            blockVanillaStructureChanges = configData.getOrElse("worldgen.blockVanillaStructureChanges", true);
+            openVanillaBiomes = stringSet(configData.getOrElse("worldgen.openVanillaBiomes", "minecraft:plains,minecraft:forest"));
+            openVanillaStructures = stringSet(configData.getOrElse("worldgen.openVanillaStructures", "minecraft:village"));
+        }
     }
 
-    /**
-     * Get a config value by key.
-     * @param key The config property key.
-     * @param defaultValue What to return if the key is missing.
-     * @return The value from config, or defaultValue if not found.
-     */
-    public static <T> T get(String key, T defaultValue) {
-        if (config != null && config.contains(key)) {
-            try {
-                return (T) config.get(key);
-            } catch (ClassCastException e) {
-                // Log and return default
-            }
-        }
-        return defaultValue;
-    }
-
-    /**
-     * Set a config value by key.
-     */
-    public static <T> void set(String key, T value) {
-        if (config != null) {
-            config.set(key, value);
-            config.save();
-        }
+    private static Set<String> stringSet(String csv) {
+        if (csv == null || csv.trim().isEmpty()) return new HashSet<>();
+        return new HashSet<>(Arrays.asList(csv.split("\\s*,\\s*")));
     }
 }
