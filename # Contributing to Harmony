@@ -1,0 +1,20 @@
+
+Thank you for your interest in contributing to Harmony!
+
+## How to contribute
+- Fork the repository, make your changes, and submit a pull request.
+- All contributions are licensed under the MIT License.
+
+## What to contribute
+- Bugfixes, new features, documentation.
+- Tests for new and existing features.
+- Ideas via GitHub Issues or Discussions.
+
+## Code Guidelines
+- Write clear, modular code and comment non-obvious logic.
+- Format Java to match standards (use Java 17).
+- Add or update tests if you change logic.
+
+## Before you PR
+- Ensure builds pass with `./gradlew build`.
+- Describe any breaking changes or new APIs.
