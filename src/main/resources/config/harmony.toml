@@ -1,0 +1,10 @@
+[general]
+logAllClaims = false
+allowForceClaim = false
+priorityMods = "harmonymod"
+
+[worldgen]
+blockVanillaBiomeChanges = true
+blockVanillaStructureChanges = true
+openVanillaBiomes = "minecraft:plains,minecraft:forest"
+openVanillaStructures = "minecraft:village"
