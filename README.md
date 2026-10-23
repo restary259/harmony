@@ -28,9 +28,9 @@ It ensures compatibility between mods that modify biomes or structures, provides
 
 1. Download the mod JAR from [Releases](https://github.com/yourname/harmonymod/releases).
 2. Place the JAR in your `mods` folder.
-3. (Optional) Edit `harmony.toml` in your `config` folder to tweak settings.
+3. (Optional) Edit `config/harmonymod-common.toml` to tweak settings.
 
-This mod requires [NeoForge](https://neoforged.net/) and Minecraft 1.20+.
+This mod requires [NeoForge](https://neoforged.net/) for Minecraft 1.21.1 and Java 21.
 
 ---
 
@@ -53,7 +53,7 @@ HarmonyAPI.registerWorldGenStructures("yourmodid", BiomeStructureUtils.resourceS
 ### Permission Check
 
 ```java
-if (HarmonyAPI.canModModifyBiome("yourmodid", new ResourceLocation("minecraft:plains"))) {
+if (HarmonyAPI.canModModifyBiome("yourmodid", ResourceLocation.parse("minecraft:plains"))) {
     // Safe to modify this biome!
 }
 ```
@@ -70,7 +70,7 @@ HarmonyEvents.onBiomeClaim((modid, biome) -> {
 
 ## Configuration
 
-Edit `harmony.toml` in the `config` folder to control:
+Edit `config/harmonymod-common.toml` to control:
 
 - **Logging:**  
   Enable `logAllClaims` to debug all claims and permission checks.
@@ -88,13 +88,13 @@ Sample:
 [general]
 logAllClaims = false
 allowForceClaim = false
-priorityMods = "harmonymod"
+priorityMods = ["harmonymod"]
 
 [worldgen]
 blockVanillaBiomeChanges = true
 blockVanillaStructureChanges = true
-openVanillaBiomes = "minecraft:plains,minecraft:forest"
-openVanillaStructures = "minecraft:village"
+openVanillaBiomes = ["minecraft:plains", "minecraft:forest"]
+openVanillaStructures = ["minecraft:village"]
 ```
 
 ---
