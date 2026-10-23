@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="harmonymod"
+version="1.0.0"
+displayName="Harmony"
+displayURL="https://github.com/restary259/harmony"
+authors="Raneem G Dawahade"
+description='''
+A universal worldgen and structure claim mediator for Minecraft modding.
+Simplifies biome/structure feature claims, ensures compatibility, and adds handy APIs for modders.
+'''
+
+[[dependencies.harmonymod]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.harmonymod]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1, 1.22)"
+ordering="NONE"
+side="BOTH"

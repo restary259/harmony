@@ -1,58 +1,66 @@
 package com.harmonymod.worldgen;
 
 import com.harmonymod.HarmonyMod;
-import com.harmonymod.config.HarmonyConfig;
 import com.harmonymod.api.HarmonyEvents;
+import com.harmonymod.config.HarmonyConfig;
 import com.harmonymod.util.BiomeStructureUtils;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Owns the worldgen claim state and answers permission queries.
+ *
+ * <p>{@code biomeOwners}/{@code structureOwners} are the authoritative record of who
+ * owns an id. The per-mod claim sets are updated only when a claim is actually accepted,
+ * so {@link #getRegisteredBiomes(String)} and {@link #canModModifyBiome(String, ResourceLocation)}
+ * never disagree.
+ */
 public class WorldGenManager {
-    private final Map<String, Set<ResourceLocation>> modBiomeClaims = new HashMap<>();
-    private final Map<String, Set<ResourceLocation>> modStructureClaims = new HashMap<>();
     private final Map<ResourceLocation, String> biomeOwners = new HashMap<>();
     private final Map<ResourceLocation, String> structureOwners = new HashMap<>();
+    private final Map<String, Set<ResourceLocation>> modBiomeClaims = new HashMap<>();
+    private final Map<String, Set<ResourceLocation>> modStructureClaims = new HashMap<>();
 
-    public synchronized boolean registerModBiomes(String modid, Set<ResourceLocation> biomes) {
+    public synchronized void registerModBiomes(String modid, Set<ResourceLocation> biomes) {
         for (ResourceLocation biome : biomes) {
             String currentOwner = biomeOwners.get(biome);
-            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, biome.toString(), true)) {
-                HarmonyMod.LOGGER.warn("Mod {} tried to claim biome {} but it's already owned by {}", modid, biome, currentOwner);
+            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, biome)) {
+                HarmonyMod.LOGGER.warn("Mod {} tried to claim biome {} but it's already owned by {}",
+                        modid, biome, currentOwner);
                 continue;
             }
             biomeOwners.put(biome, modid);
+            modBiomeClaims.computeIfAbsent(modid, k -> new HashSet<>()).add(biome);
             HarmonyEvents.fireBiomeClaim(modid, biome);
             if (HarmonyConfig.logAllClaims) HarmonyMod.LOGGER.info("Mod {} claimed biome {}", modid, biome);
         }
-        modBiomeClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(biomes);
-        return true;
     }
 
-    public synchronized boolean registerModStructures(String modid, Set<ResourceLocation> structures) {
+    public synchronized void registerModStructures(String modid, Set<ResourceLocation> structures) {
         for (ResourceLocation structure : structures) {
             String currentOwner = structureOwners.get(structure);
-            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, structure.toString(), false)) {
-                HarmonyMod.LOGGER.warn("Mod {} tried to claim structure {} but it's already owned by {}", modid, structure, currentOwner);
+            if (currentOwner != null && !canOverrideClaim(modid, currentOwner, structure)) {
+                HarmonyMod.LOGGER.warn("Mod {} tried to claim structure {} but it's already owned by {}",
+                        modid, structure, currentOwner);
                 continue;
             }
             structureOwners.put(structure, modid);
+            modStructureClaims.computeIfAbsent(modid, k -> new HashSet<>()).add(structure);
             HarmonyEvents.fireStructureClaim(modid, structure);
             if (HarmonyConfig.logAllClaims) HarmonyMod.LOGGER.info("Mod {} claimed structure {}", modid, structure);
         }
-        modStructureClaims.computeIfAbsent(modid, k -> new HashSet<>()).addAll(structures);
-        return true;
     }
 
     public boolean canModModifyBiome(String modid, ResourceLocation biome) {
         HarmonyEvents.fireBiomePermissionCheck(modid, biome);
         String owner = biomeOwners.get(biome);
         if (owner == null) {
-            if (HarmonyConfig.blockVanillaBiomeChanges && BiomeStructureUtils.isVanilla(biome.toString())
-                    && !HarmonyConfig.openVanillaBiomes.contains(biome.toString())) {
-                return false;
-            }
-            return true;
+            return !isBlockedVanilla(biome, HarmonyConfig.blockVanillaBiomeChanges, HarmonyConfig.openVanillaBiomes);
         }
         return modid.equals(owner);
     }
@@ -61,29 +69,36 @@ public class WorldGenManager {
         HarmonyEvents.fireStructurePermissionCheck(modid, structure);
         String owner = structureOwners.get(structure);
         if (owner == null) {
-            if (HarmonyConfig.blockVanillaStructureChanges && BiomeStructureUtils.isVanilla(structure.toString())
-                    && !HarmonyConfig.openVanillaStructures.contains(structure.toString())) {
-                return false;
-            }
-            return true;
+            return !isBlockedVanilla(structure, HarmonyConfig.blockVanillaStructureChanges,
+                    HarmonyConfig.openVanillaStructures);
         }
         return modid.equals(owner);
     }
 
-    public Set<ResourceLocation> getRegisteredBiomes(String modid) {
-        return modBiomeClaims.getOrDefault(modid, Collections.emptySet());
+    public synchronized Set<ResourceLocation> getRegisteredBiomes(String modid) {
+        return Set.copyOf(modBiomeClaims.getOrDefault(modid, Collections.emptySet()));
     }
 
-    public Set<ResourceLocation> getRegisteredStructures(String modid) {
-        return modStructureClaims.getOrDefault(modid, Collections.emptySet());
+    public synchronized Set<ResourceLocation> getRegisteredStructures(String modid) {
+        return Set.copyOf(modStructureClaims.getOrDefault(modid, Collections.emptySet()));
     }
 
-    private boolean canOverrideClaim(String newMod, String oldMod, String id, boolean isBiome) {
-        // Priority mods logic
+    public synchronized int getBiomeClaimCount() {
+        return biomeOwners.size();
+    }
+
+    public synchronized int getStructureClaimCount() {
+        return structureOwners.size();
+    }
+
+    private boolean isBlockedVanilla(ResourceLocation id, boolean blockingEnabled, Set<String> openList) {
+        return blockingEnabled && BiomeStructureUtils.isVanilla(id.toString()) && !openList.contains(id.toString());
+    }
+
+    private boolean canOverrideClaim(String newMod, String oldMod, ResourceLocation id) {
         if (HarmonyConfig.priorityMods.contains(newMod) && !HarmonyConfig.priorityMods.contains(oldMod)) {
             return true;
         }
-        // Config option
         if (HarmonyConfig.allowForceClaim) {
             HarmonyMod.LOGGER.warn("Force-claim allowed: {} replaces {} for {}", newMod, oldMod, id);
             return true;
