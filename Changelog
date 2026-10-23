@@ -1,9 +1,23 @@
-
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] - 2025-11-16
+## [1.0.0] - 2026-10-23
+
 ### Added
-- Initial public release
-- Worldgen claim & permission system
-- Configurable ownership, priorities, event hooks
-- Debug & compatibility tools
+- Worldgen claim and permission system: biome and structure modifiers are attributed
+  to their authoring mod by registry namespace and enforced on a real dedicated server.
+- `/harmony` operator commands: `status`, `list`, `conflicts`, `why <id>`, `reload`.
+- NeoForge-generated config screen with localized labels and tooltips.
+- Optional HUD overlay (`general.showHudOverlay`) summarizing attributed modifiers
+  and blocked changes.
+- `HarmonyAPI` (v1) for explicit claims, permission checks, queries, and event hooks.
+- Maven publication, sources jar, mod icon, and a GitHub Actions build workflow.
+
+### Fixed
+- `/harmony why <id>` now accepts an unquoted id (for example `minecraft:desert`);
+  the previous string argument rejected `:` and required quoting.
+- `/harmony why` now classifies a target from registry membership instead of claim
+  state, so open-listed targets such as `minecraft:plains` report the correct verdict.
+- Explicit `HarmonyAPI` claims are no longer discarded on server stop or
+  `/harmony reload`; only derived state is cleared.
+- Config translations now load: the lang file lives under `assets/harmonymod/lang/`
+  and uses NeoForge's `harmonymod.configuration.*` key convention.

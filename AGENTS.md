@@ -38,6 +38,16 @@ between mods (who may edit a given biome or structure).
   1.21.1 needs `pack_format` **48** (not 34).
 - `ClaimRegistry` maps are the authoritative claim record. Only add to a mod's
   claim set when the claim is accepted, so `biomesOf` and `canModifyBiome` stay consistent.
+- Claim state has two lifetimes. `reset()` clears only *derived* state (conflict ledger,
+  dedup keys, attribution cache) and runs on `ServerStoppingEvent` and `/harmony reload`.
+  Explicit `HarmonyAPI.claimBiome/claimStructure` calls are made once from a mod
+  constructor and must survive both, so `reset()` deliberately keeps them; `clearAllClaims()`
+  drops them and is for test isolation only. Do not merge the two back together.
+- Client lang files must live at `assets/<modid>/lang/en_us.json`. NeoForge derives config
+  screen keys as `<modid>.configuration.<lastPathSegment>`, so the section keys are
+  `harmonymod.configuration.general` / `.worldgen` (not `.section.general`).
+- `/harmony why` takes a `ResourceLocationArgument`, not a string: `StringArgumentType.string()`
+  requires quoting and rejects `:`.
 
 ## Enforcement (mixins)
 
@@ -74,6 +84,14 @@ check. Grep `run/logs/latest.log` for "Blocked biome modifier" / "Blocked struct
 modifier". Confirmed working cases: `minecraft:desert` blocked, `minecraft:plains`
 allowed (open list), `minecraft:ancient_city` blocked, `minecraft:village_plains`
 allowed (`#minecraft:village`).
+
+## Distribution
+
+- `./gradlew build` produces `build/libs/harmonymod-<version>.jar` plus a sources jar.
+- `./gradlew publishAllPublicationsToLocalBuildRepository` writes jar/sources/POM into
+  `build/repo`. Set `PUBLISH_URL`/`PUBLISH_USERNAME`/`PUBLISH_PASSWORD` to also publish remotely.
+- The mod icon is `src/main/resources/harmonymod.png`, referenced by `logoFile` in the toml.
+- CI: `.github/workflows/build.yml` builds and uploads the jar as a workflow artifact.
 
 ## Repository
 

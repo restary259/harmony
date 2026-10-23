@@ -29,8 +29,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * other mod calling Harmony, enforcement works even against mods that have never
  * heard of Harmony.
  *
- * <p>State is reload-safe: {@link #reset()} clears derived ownership so a datapack
- * reload re-derives from scratch instead of accumulating stale claims.
+ * <p>Two kinds of state live here and they have different lifetimes. Explicit claims
+ * (from {@link #claimBiome}/{@link #claimStructure}) are made once, from a mod's
+ * constructor, and must survive server stop and datapack reload — a mod cannot be asked
+ * to re-run its constructor. Derived enforcement state (the conflict ledger, its
+ * deduplication keys, and the modifier-attribution cache) is rebuilt on each modifier
+ * pass and is cleared by {@link #reset()}.
  */
 public final class ClaimRegistry {
 
@@ -41,13 +45,26 @@ public final class ClaimRegistry {
 
     private ClaimRegistry() {}
 
-    /** Clears all derived ownership and the conflict ledger. Called on datapack/server reload. */
+    /**
+     * Clears derived enforcement state: the conflict ledger, its deduplication keys,
+     * and the modifier-attribution cache.
+     *
+     * <p>Explicit claims are deliberately retained. They are registered once per JVM by
+     * mod constructors, so clearing them here would silently strip a claiming mod of its
+     * own target after a world reload. Use {@link #clearAllClaims()} to drop them, which
+     * exists for test isolation only.
+     */
     public static void reset() {
-        BIOME_CLAIMS.clear();
-        STRUCTURE_CLAIMS.clear();
         CONFLICTS.clear();
         CONFLICT_KEYS.clear();
         ModifierOwnership.invalidate();
+    }
+
+    /** Drops explicit claims as well as derived state. For test isolation only. */
+    public static void clearAllClaims() {
+        BIOME_CLAIMS.clear();
+        STRUCTURE_CLAIMS.clear();
+        reset();
     }
 
     /**

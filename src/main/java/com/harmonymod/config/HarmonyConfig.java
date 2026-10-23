@@ -17,6 +17,7 @@ public class HarmonyConfig {
 
     private static final ModConfigSpec.BooleanValue LOG_ALL_CLAIMS;
     private static final ModConfigSpec.BooleanValue ALLOW_FORCE_CLAIM;
+    private static final ModConfigSpec.BooleanValue SHOW_HUD_OVERLAY;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> PRIORITY_MODS;
     private static final ModConfigSpec.BooleanValue BLOCK_VANILLA_BIOME_CHANGES;
     private static final ModConfigSpec.BooleanValue BLOCK_VANILLA_STRUCTURE_CHANGES;
@@ -32,6 +33,9 @@ public class HarmonyConfig {
         ALLOW_FORCE_CLAIM = builder
                 .comment("Allow a mod to override an existing claim on a biome/structure.")
                 .define("general.allowForceClaim", false);
+        SHOW_HUD_OVERLAY = builder
+                .comment("Show a Harmony summary overlay on the HUD (client only).")
+                .define("general.showHudOverlay", false);
         PRIORITY_MODS = builder
                 .comment("Mod ids whose claims take priority over non-priority mods.")
                 .defineListAllowEmpty("general.priorityMods", List.of("harmonymod"), () -> "modid",
@@ -61,6 +65,7 @@ public class HarmonyConfig {
 
     public static boolean logAllClaims;
     public static boolean allowForceClaim;
+    public static boolean showHudOverlay = false;
     public static Set<String> priorityMods = Set.of("harmonymod");
     public static boolean blockVanillaBiomeChanges = true;
     public static boolean blockVanillaStructureChanges = true;
@@ -74,6 +79,7 @@ public class HarmonyConfig {
     public static void load() {
         logAllClaims = LOG_ALL_CLAIMS.get();
         allowForceClaim = ALLOW_FORCE_CLAIM.get();
+        showHudOverlay = SHOW_HUD_OVERLAY.get();
         priorityMods = Set.copyOf(PRIORITY_MODS.get());
         blockVanillaBiomeChanges = BLOCK_VANILLA_BIOME_CHANGES.get();
         blockVanillaStructureChanges = BLOCK_VANILLA_STRUCTURE_CHANGES.get();

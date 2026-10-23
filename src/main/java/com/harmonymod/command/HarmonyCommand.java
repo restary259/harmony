@@ -5,12 +5,16 @@ import com.harmonymod.claim.ClaimRegistry;
 import com.harmonymod.claim.Conflict;
 import com.harmonymod.claim.ModifierOwnership;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.Structure;
 
 import java.util.List;
 
@@ -34,7 +38,7 @@ public final class HarmonyCommand {
                 .then(Commands.literal("conflicts")
                         .executes(HarmonyCommand::conflicts))
                 .then(Commands.literal("why")
-                        .then(Commands.argument("target", StringArgumentType.string())
+                        .then(Commands.argument("target", ResourceLocationArgument.id())
                                 .executes(HarmonyCommand::why)))
                 .then(Commands.literal("reload")
                         .executes(HarmonyCommand::reload)));
@@ -84,33 +88,53 @@ public final class HarmonyCommand {
 
     private static int why(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
-        String raw = StringArgumentType.getString(ctx, "target");
-        ResourceLocation id = ResourceLocation.tryParse(raw);
-        if (id == null) {
-            source.sendFailure(Component.literal("Not a valid id: " + raw));
+        ResourceLocation id = ResourceLocationArgument.getId(ctx, "target");
+
+        // Kind comes from registry membership, not from claim state: an unclaimed
+        // target still has to be classified correctly to consult the right rules.
+        Registry<Biome> biomes = source.registryAccess().registryOrThrow(Registries.BIOME);
+        Registry<Structure> structures = source.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        boolean isBiome = biomes.containsKey(id);
+        boolean isStructure = structures.containsKey(id);
+
+        if (!isBiome && !isStructure) {
+            source.sendFailure(Component.literal(
+                    id + " is neither a biome nor a structure in the current registries."));
             return 0;
         }
-        String biomeOwner = ClaimRegistry.biomeOwner(id);
-        String structureOwner = ClaimRegistry.structureOwner(id);
-        String owner = biomeOwner != null ? biomeOwner : structureOwner;
-        String kind = biomeOwner != null ? "biome" : (structureOwner != null ? "structure" : "unclaimed");
 
+        if (isBiome && isStructure) {
+            // A target cannot be both in vanilla, but report both verdicts if it is.
+            report(source, id, "biome", ClaimRegistry.biomeOwner(id),
+                    ClaimRegistry.canModifyBiome(HarmonyMod.MODID, id, biomes.getHolder(id).orElse(null)));
+            report(source, id, "structure", ClaimRegistry.structureOwner(id),
+                    ClaimRegistry.canModifyStructure(HarmonyMod.MODID, id, structures.getHolder(id).orElse(null)));
+            return 1;
+        }
+
+        if (isBiome) {
+            report(source, id, "biome", ClaimRegistry.biomeOwner(id),
+                    ClaimRegistry.canModifyBiome(HarmonyMod.MODID, id, biomes.getHolder(id).orElse(null)));
+        } else {
+            report(source, id, "structure", ClaimRegistry.structureOwner(id),
+                    ClaimRegistry.canModifyStructure(HarmonyMod.MODID, id, structures.getHolder(id).orElse(null)));
+        }
+        return 1;
+    }
+
+    private static void report(CommandSourceStack source, ResourceLocation id, String kind,
+                               String owner, boolean allowed) {
         source.sendSuccess(() -> Component.literal(
-                "%s is %s%s.".formatted(id, kind,
-                        owner == null ? "" : " owned by " + owner)), false);
-
-        boolean allowed = biomeOwner != null
-                ? ClaimRegistry.canModifyBiome(HarmonyMod.MODID, id)
-                : ClaimRegistry.canModifyStructure(HarmonyMod.MODID, id);
+                "%s is a %s%s.".formatted(id, kind, owner == null ? " (unclaimed)" : " owned by " + owner)), false);
         source.sendSuccess(() -> Component.literal(
                 "  Harmony itself may modify it: " + allowed), false);
-        return 1;
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
         ClaimRegistry.reset();
         ctx.getSource().sendSuccess(() -> Component.literal(
-                "Harmony: claims and conflict ledger cleared. Ownership will be re-derived on next modifier pass."), true);
+                "Harmony: conflict ledger and modifier attribution cleared; explicit claims kept. "
+                        + "Attribution is re-derived on the next modifier pass."), true);
         return 1;
     }
 }

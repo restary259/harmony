@@ -11,9 +11,10 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 /**
  * Handles server lifecycle and command registration for Harmony.
  *
- * <p>Ownership is derived per modifier pass, so the derived state is cleared when the
- * server stops and when a datapack reload occurs. Keeping this in one place is what
- * makes the registry reload-safe.
+ * <p>{@link ClaimRegistry#reset()} clears only derived enforcement state (the conflict
+ * ledger and the modifier-attribution cache), which is rebuilt on the next modifier pass.
+ * Explicit {@code HarmonyAPI} claims are intentionally retained across stop and reload,
+ * because a mod registers them once from its constructor and is never re-constructed.
  */
 public class HarmonyEventHandler {
 

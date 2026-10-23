@@ -55,11 +55,13 @@ Operators (permission level 2) get a `/harmony` command:
 | `/harmony status` | Claim counts, conflict count, and how many modifiers were attributed |
 | `/harmony list` | Every claimed biome/structure and its owner |
 | `/harmony conflicts` | Every blocked or refused modification, with both parties |
-| `/harmony why <id>` | Why a target is or is not modifiable |
-| `/harmony reload` | Clear derived state; ownership is re-derived on the next pass |
+| `/harmony why <id>` | Why a target is or is not modifiable (e.g. `/harmony why minecraft:desert`) |
+| `/harmony reload` | Clear the conflict ledger and attribution cache; explicit claims are kept |
 
 Client-side, the mod list's **Config** button opens NeoForge's generated config
-screen, which exposes every option with validation and tooltips.
+screen, which exposes every option with validation and tooltips. Setting
+`general.showHudOverlay = true` adds a small on-screen summary of attributed
+modifiers and blocked changes.
 
 ---
 
@@ -89,6 +91,7 @@ openVanillaStructures = ["#minecraft:village"]
 - `priorityMods` — mod ids that may take over a non-priority mod's claim.
 - `allowForceClaim` — lets any mod take over any claim. For dev packs only.
 - `logAllClaims` — logs every claim and permission check.
+- `showHudOverlay` — client only; draws a Harmony summary on the HUD.
 
 Non-vanilla targets that nobody has claimed are always open.
 
@@ -123,7 +126,7 @@ throws if Harmony has not initialized.
 
 ## Verification
 
-`./gradlew build` runs 21 unit tests over the claim registry, permission rules, reload
+`./gradlew build` runs 23 unit tests over the claim registry, permission rules, reload
 safety, event dispatch, tag resolution, and conflict de-duplication.
 
 Enforcement was additionally verified end-to-end on a real dedicated server with a
@@ -156,7 +159,10 @@ configuration genuinely drives enforcement rather than merely being read.
 ./gradlew runClient      # dev client
 ```
 
-Requires JDK 21.
+Requires JDK 21. Published artifacts (jar, sources, POM) are written to
+`build/repo` by `./gradlew publishAllPublicationsToLocalBuildRepository`. Set
+`PUBLISH_URL`, `PUBLISH_USERNAME`, and `PUBLISH_PASSWORD` to also publish to a
+remote maven repository.
 
 ---
 

@@ -26,7 +26,7 @@ class ClaimRegistryTest {
 
     @BeforeEach
     void resetState() {
-        ClaimRegistry.reset();
+        ClaimRegistry.clearAllClaims();
         HarmonyEvents.clearListeners();
         HarmonyConfig.logAllClaims = false;
         HarmonyConfig.allowForceClaim = false;
@@ -135,16 +135,36 @@ class ClaimRegistryTest {
     // --- reload safety -----------------------------------------------------
 
     @Test
-    void resetClearsClaimsAndConflicts() {
+    void resetKeepsExplicitClaimsButClearsConflicts() {
         ClaimRegistry.claimBiome("testmod", SPECIAL);
-        ClaimRegistry.claimBiome("othermod", SPECIAL);
+        ClaimRegistry.record(new Conflict("testmod", SPECIAL, "unclaimed vanilla",
+                Conflict.Kind.BIOME_MODIFIER, "blocked"));
         assertTrue(ClaimRegistry.conflictCount() > 0);
 
         ClaimRegistry.reset();
 
-        assertTrue(ClaimRegistry.allClaimedBiomes().isEmpty());
+        // Explicit claims come from a mod constructor and must survive: a mod is never
+        // re-constructed, so dropping them would silently un-own the claiming mod.
+        assertEquals("testmod", ClaimRegistry.biomeOwner(SPECIAL));
+        assertEquals(1, ClaimRegistry.allClaimedBiomes().size());
         assertTrue(ClaimRegistry.conflicts().isEmpty());
+    }
+
+    @Test
+    void clearAllClaimsDropsExplicitClaims() {
+        ClaimRegistry.claimBiome("testmod", SPECIAL);
+        ClaimRegistry.clearAllClaims();
         assertNull(ClaimRegistry.biomeOwner(SPECIAL));
+        assertTrue(ClaimRegistry.allClaimedBiomes().isEmpty());
+    }
+
+    @Test
+    void claimsSurviveAServerStopCycle() {
+        ClaimRegistry.claimBiome("testmod", SPECIAL);
+        // ServerStoppingEvent calls reset(); the claim must still be enforced afterwards.
+        ClaimRegistry.reset();
+        assertTrue(ClaimRegistry.canModifyBiome("testmod", SPECIAL),
+                "the claiming mod keeps access to its own target across a stop/start cycle");
     }
 
     // --- events ------------------------------------------------------------
