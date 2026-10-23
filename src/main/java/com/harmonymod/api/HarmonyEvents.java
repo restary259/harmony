@@ -10,7 +10,8 @@ import java.util.function.BiConsumer;
  * Listener registry for Harmony claim and permission-check events.
  *
  * <p>Listeners may be added from any thread while events are being fired, so the
- * backing sets are copy-on-write.
+ * backing sets are copy-on-write. Callers that already know whether they are dealing
+ * with a biome or a structure should call the specific {@code fire*} overload.
  */
 public class HarmonyEvents {
 
@@ -51,6 +52,14 @@ public class HarmonyEvents {
         for (BiConsumer<String, ResourceLocation> listener : structurePermissionCheckListeners) {
             listener.accept(modid, structure);
         }
+    }
+
+    /** Removes all listeners. Used by tests to isolate cases. */
+    public static void clearListeners() {
+        biomeClaimListeners.clear();
+        structureClaimListeners.clear();
+        biomePermissionCheckListeners.clear();
+        structurePermissionCheckListeners.clear();
     }
 
     private HarmonyEvents() {}

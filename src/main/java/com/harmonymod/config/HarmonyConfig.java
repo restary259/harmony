@@ -49,9 +49,11 @@ public class HarmonyConfig {
                         List.of("minecraft:plains", "minecraft:forest"), () -> "minecraft:plains",
                         HarmonyConfig::isResourceLocation);
         OPEN_VANILLA_STRUCTURES = builder
-                .comment("Vanilla structures that are always open for modification.")
+                .comment("Vanilla structures that are always open for modification.",
+                        "Entries beginning with '#' are structure tags, e.g. '#minecraft:village'.",
+                        "Note: 'minecraft:village' is a tag, not a structure id; use the '#' form to open it.")
                 .defineListAllowEmpty("worldgen.openVanillaStructures",
-                        List.of("minecraft:village"), () -> "minecraft:village",
+                        List.of("#minecraft:village"), () -> "minecraft:village",
                         HarmonyConfig::isResourceLocation);
 
         SPEC = builder.build();
@@ -63,7 +65,7 @@ public class HarmonyConfig {
     public static boolean blockVanillaBiomeChanges = true;
     public static boolean blockVanillaStructureChanges = true;
     public static Set<String> openVanillaBiomes = Set.of("minecraft:plains", "minecraft:forest");
-    public static Set<String> openVanillaStructures = Set.of("minecraft:village");
+    public static Set<String> openVanillaStructures = Set.of("#minecraft:village");
 
     /**
      * Copies the loaded spec values into the static fields. Must be called before
@@ -84,7 +86,9 @@ public class HarmonyConfig {
     }
 
     private static boolean isResourceLocation(Object value) {
-        return value instanceof String s && ResourceLocation.tryParse(s) != null;
+        if (!(value instanceof String s)) return false;
+        String id = s.startsWith("#") ? s.substring(1) : s;
+        return ResourceLocation.tryParse(id) != null;
     }
 
     private HarmonyConfig() {}

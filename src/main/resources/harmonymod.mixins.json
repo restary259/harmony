@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.harmonymod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "mixins": [
+    "ModifiableBiomeInfoMixin",
+    "ModifiableStructureInfoMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

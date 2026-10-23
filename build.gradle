@@ -47,9 +47,15 @@ neoForge {
 
 repositories {
     mavenCentral()
+    // Mixin and MixinExtras for intercepting NeoForge's modifier pipeline.
+    maven { url = 'https://maven.neoforged.net/releases' }
 }
 
 dependencies {
+    // Sponge Mixin powers the worldgen enforcement hooks.
+    compileOnly 'net.fabricmc:sponge-mixin:0.16.4+mixin.0.8.7'
+    annotationProcessor 'net.fabricmc:sponge-mixin:0.16.4+mixin.0.8.7'
+
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
