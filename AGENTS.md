@@ -80,7 +80,9 @@ between mods (who may edit a given biome or structure).
 ## Verifying enforcement
 
 `./gradlew runServer` with a datapack under `run/world/datapacks/` is the end-to-end
-check. Grep `run/logs/latest.log` for "Blocked biome modifier" / "Blocked structure
+check. Claim durability is checked with a throwaway companion mod that calls
+`HarmonyAPI.claimBiome` from its constructor, then `harmony why <id>` before and after
+`harmony reload` over RCON; both must name the same owner. Grep `run/logs/latest.log` for "Blocked biome modifier" / "Blocked structure
 modifier". Confirmed working cases: `minecraft:desert` blocked, `minecraft:plains`
 allowed (open list), `minecraft:ancient_city` blocked, `minecraft:village_plains`
 allowed (`#minecraft:village`).

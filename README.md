@@ -126,8 +126,8 @@ throws if Harmony has not initialized.
 
 ## Verification
 
-`./gradlew build` runs 23 unit tests over the claim registry, permission rules, reload
-safety, event dispatch, tag resolution, and conflict de-duplication.
+`./gradlew build` runs 25 unit tests over the claim registry, permission rules, reload
+safety, event dispatch, tag resolution, conflict de-duplication, and config localization.
 
 Enforcement was additionally verified end-to-end on a real dedicated server with a
 datapack registering four modifiers:
@@ -148,6 +148,19 @@ Observed log output:
 
 Setting `blockVanillaBiomeChanges = false` produced zero blocks, confirming the
 configuration genuinely drives enforcement rather than merely being read.
+
+Claim durability was verified the same way, with a companion mod that calls
+`HarmonyAPI.claimBiome("claimtest", minecraft:desert)` from its constructor. Before the
+fix, `/harmony reload` emptied the ledger and the biome became unowned. Now:
+
+```
+> harmony why minecraft:desert
+minecraft:desert is a biome owned by claimtest.
+> harmony reload
+Harmony: conflict ledger and modifier attribution cleared; explicit claims kept.
+> harmony why minecraft:desert
+minecraft:desert is a biome owned by claimtest.
+```
 
 ---
 
